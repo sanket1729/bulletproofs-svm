@@ -51,28 +51,44 @@ class RangeProof(object):
         """Given the value value, follow the algorithm laid out
         on p.16, 17 (section 4.2) of paper for prover side.
         """
+        
+        # generate Pederson commitment for value
         self.fsstate = ""
         self.value = value
         self.gamma = os.urandom(32)
         pc = PC(encode(self.value, 256, minlen=32), blinding=self.gamma)
+
+
+        # generate the 3 conditions
         self.V = pc.get_commitment()
         self.aL = Vector(value, self.bitlength)
         self.aR = self.aL.subtract([1] * self.bitlength)
+
+        # assert checks
         assert self.aL.hadamard(self.aR).v == Vector([0]*self.bitlength).v
         assert self.aL.inner_product(PowerVector(2, self.bitlength)) == value
+
+        # Get the commitment A        
         self.alpha = self.get_blinding_value()
-        self.A = IPC(self.aL.v, self.aR.v, vtype="int", u=getNUMS(255).serialize())
+        self.A = VPC(self.aL.v, self.aR.v, vtype="int", u=getNUMS(255).serialize())
         self.A.set_blinding(c=self.alpha)
         self.A.get_commitment()
+
+        # get the 3 corresponding blinding vectors/values to convert proof into zero knowledge
         self.rho = self.get_blinding_value()
         self.sL = self.get_blinding_vector()
         self.sR = self.get_blinding_vector()
-        self.S = IPC(self.sL.v, self.sR.v, vtype="int", u=getNUMS(255).serialize())
+
+        # create a commitment to the blinding vector
+        self.S = VPC(self.sL.v, self.sR.v, vtype="int", u=getNUMS(255).serialize())
         self.S.set_blinding(c=self.rho)
         self.S.get_commitment()
+
+        # generate the challenges y and z as per fiat shamir hueristic
         self.y, self.z = self.fiat_shamir([self.V, self.A.P, self.S.P])
         self.z2 = (self.z * self.z) % N
         self.zv = Vector([self.z] * self.bitlength)
+
         #construct l(X) and r(X) coefficients; l[0] = constant term, l[1] linear term,
         #same for r(X)
         self.l = []
@@ -87,15 +103,25 @@ class RangeProof(object):
         #constant term of t(X) = <l(X), r(X)> is the inner product of the
         #constant terms of l(X) and r(X)
         self.t0 = self.l[0].inner_product(self.r[0])
+
         self.t1 = (self.l[0].inner_product(self.r[1]) + (
             self.l[1].inner_product(self.r[0]))) % N
+        
         self.t2 = self.l[1].inner_product(self.r[1])
+
+        # we have constructed the polynomials l(x) r(x) and t(x) upto here
         self.tau1 = self.get_blinding_value()
         self.tau2 = self.get_blinding_value()
         self.T1 = PC(self.t1, blinding=self.tau1)
         self.T2 = PC(self.t2, blinding=self.tau2)
+
+        # Since we know the values of we must also send commiments to remaining polynomial.
+        # this is similar to what I did in vecotrs proving dot product
+
+        # After commiting to the value we get the next challenge x66
         self.x_1 = self.fiat_shamir([self.T1.get_commitment(),
                                      self.T2.get_commitment()], nret=1)[0]
+
         self.mu = (self.alpha + self.rho * self.x_1) % N
         self.tau_x = (self.tau1 * self.x_1 + self.tau2 * self.x_1 * self.x_1 + \
                       self.z2 * decode(self.gamma, 256)) % N
@@ -184,12 +210,16 @@ class RangeProof(object):
             self.hprime.append(ecmult(pow(self.yinv, i-1, N),getNUMS(
                 self.bitlength+i).serialize(), False))
         #construction of verification equation (61)
+        
+        #cmopute the dangling term
         onen = PowerVector(1, self.bitlength)
         twon = PowerVector(2, self.bitlength)
         yn = PowerVector(self.y, self.bitlength)
         self.k = (yn.inner_product(onen) * -self.z2) % N
         self.k = (self.k - (onen.inner_product(twon) * (pow(self.z, 3, N)))) % N
         self.gexp = (self.k + self.z * onen.inner_product(yn)) % N
+
+        # this computes PC of <l,r> with t_x
         self.lhs = PC(t, blinding=tau_x).get_commitment()
         self.rhs = ecmult(self.gexp, getG(True), False)
         self.vz2 = ecmult((self.z * self.z) % N, V, False)
@@ -203,18 +233,22 @@ class RangeProof(object):
             print(binascii.hexlify(self.rhs))
             return False
         #reconstruct P (62)
+        # standard commitment check
         self.P = Ap
         self.P = ecadd_pubkeys([ecmult(self.x_1, Sp, False), self.P], False)
+        # upto here P = A + x*S
         #now add g*^(-z)
         for i in range(self.bitlength):
             self.P = ecadd_pubkeys([ecmult(-self.z % N, getNUMS(i+1).serialize(),
                                            False), self.P], False)
+        # upto here P = A + x*S - g^(-z)
         #zynz22n is the exponent of hprime
         self.zynz22n = yn.scalar_mult(self.z).add(PowerVector(2,
                                             self.bitlength).scalar_mult(self.z2))
         for i in range(self.bitlength):
             self.P = ecadd_pubkeys([ecmult(self.zynz22n.v[i], self.hprime[i],
                                            False), self.P], False)
+        # Here P value is computed correctly
         self.uchallenge = self.fiat_shamir([tau_x, mu, t], nret=1)[0]
         self.U = ecmult(self.uchallenge, getG(True), False)
         self.P = ecadd_pubkeys([ecmult(t, self.U, False), self.P], False)
@@ -286,6 +320,13 @@ def run_test_rangeproof(value, rangebits):
         else:
             print("Rangeproof succeeded but it should not have, value is not in range; bug.")
 
+def _test(value, rangebits):
+    # self.value = value
+    gamma = os.urandom(32)
+    pc = PC(encode(value, 256, minlen=32), blinding=gamma)
+    print(pc.serialize())
+
 if __name__ == "__main__":
     value, rangebits = [int(x) for x in sys.argv[1:3]]
     run_test_rangeproof(value, rangebits)
+    # _test(value,rangebits)
