@@ -1,17 +1,9 @@
-# bulletproofs-poc
-Learning how to bulletproofs
+# bulletproofs-svm-poc
 
-This is a very rough-and-ready (e.g. lacking in sanity checking) implementation of the
-algorithm in the [Bulletproofs paper](https://eprint.iacr.org/2017/1066) of Bunz et al.
+This is a implementation of bulletproofs based on implementation from waxwing. This implementation of the
+algorithm in the [Bulletproofs paper](https://eprint.iacr.org/2017/1066) of Bunz et al. The code only considers the application of range proofs for a SVM. 
 
-The purpose was only to help me (and anyone else similarly curious) understand how
-the compact rangeproof explained in the paper, works.
-
-It specifically for now is limited to a single rangeproof, not aggregated. It is also
-limited to ranges of 0-2^n where n is between 1 and 6 inclusive (so max range 64 bits).
-
-Obviously being in Python it is laughably slow, but more precisely: there is no attempt
-to optimize for performance (which real implementations will have to do).
+This is limited to values where n is power of 2. 
 
 #### Examples
 
@@ -80,10 +72,7 @@ don't need; to avoid that you can if you like go into the `joinmarket-clientserv
 directory and do a `python setup.py install` instead, which only pulls in the `secp256k1-py`
 binding and that package. Still do it in a virtualenv, though, for sanity.
 
-#### TODO
+#### Short explanation for SVM
 
-* Get failure cases working properly.
-* Aggregated proofs implementation.
-* Larger bit ranges like 128.
-* (won't bother) how to improve/optimize algo.
-* (won't bother probably) how to deal with non-powers-of-2 bit ranges.
+SVM ( https://en.wikipedia.org/wiki/Support_vector_machine ) is a popular algorithm in machine learning. In machine learning, support vector machines (SVMs, also support vector networks[1]) are supervised learning models with associated learning algorithms that analyze data used for classification and regression analysis. Given a set of training examples, each marked as belonging to one or the other of two categories, an SVM training algorithm builds a model that assigns new examples to one category or the other, making it a non-probabilistic binary linear classifier.
+
