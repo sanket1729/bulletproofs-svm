@@ -72,11 +72,11 @@ def getNUMS(index=0):
     
     The NUMS generator generated is returned as a secp256k1.PublicKey.
     """
-
-    assert index in range(256)
+    # print("Hello")
+    # assert index in range(256), "Does this not seem possible"
     nums_point = None
     for G in [getG(True), getG(False)]:
-        seed = G + chr(index)
+        seed = G + chr(index%256)
         for counter in range(256):
             seed_c = seed + chr(counter)
             hashed_seed = hashlib.sha256(seed_c).digest()

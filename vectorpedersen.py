@@ -61,6 +61,7 @@ class VPC(object):
         #This allows subclasses to customize (specifically,
         #for the inner product case).
         self.c = None
+        # print("Here")
         self.set_base_points(g, h, u)
 
     def is_vector(self, v):

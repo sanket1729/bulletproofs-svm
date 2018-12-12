@@ -44,7 +44,7 @@ class RangeProof(object):
 
     def __init__(self, bitlength):
         self.fsstate = ""
-        assert bitlength in [2, 4, 8, 16, 32, 64], "Bitlength must be power of 2 <= 64"
+        assert bitlength in [2, 4, 8, 16, 32, 64, 128], "Bitlength must be power of 2 <= 128"
         self.bitlength = bitlength
 
     def generate_proof(self, value):
@@ -70,6 +70,7 @@ class RangeProof(object):
 
         # Get the commitment A        
         self.alpha = self.get_blinding_value()
+        # print("Maybe")
         self.A = VPC(self.aL.v, self.aR.v, vtype="int", u=getNUMS(255).serialize())
         self.A.set_blinding(c=self.alpha)
         self.A.get_commitment()
@@ -328,5 +329,6 @@ def _test(value, rangebits):
 
 if __name__ == "__main__":
     value, rangebits = [int(x) for x in sys.argv[1:3]]
+    print("Starting")
     run_test_rangeproof(value, rangebits)
     # _test(value,rangebits)

@@ -8,11 +8,11 @@ indicate x is a vector.
 """
 import hashlib
 import binascii
+import os
 
 from jmbitcoin import (multiply, add_pubkeys, encode, decode, N)
-from utils import (modinv, inner_product, halves, getNUMS)
-from vectorpedersen import VPC
-
+from utils import (modinv, inner_product, halves, getNUMS, ecmult, Vector)
+from vectorpedersen import VPC, PC
 class IPC(VPC):
     """An object to encapsulate an inner product commitment,
     which has form:
@@ -151,9 +151,44 @@ class IPC(VPC):
 
 
 def run_test_IPC():
-    a = [encode(x, 256, 32) for x in range(1, 9)]
-    b = [encode(x, 256, 32) for x in range(9, 17)]
-    ipc1 = IPC(a, b)
+    w = [x for x in range(1234 + 1, 1234+ 9)]
+    xi = [x for x in range(9, 17)]
+
+    # print (binascii.hexlify(w_enc[0]), type(w_enc[0]))
+    
+
+    # Make a random vector
+    randints = [decode(os.urandom(32), 256) for _ in range(8)]
+    b_vec = Vector(randints)
+
+
+    # Simulate a challenge e
+    e = hashlib.sha256("Test").digest()
+    # e = 2
+    e = decode(e,256)
+    w_vec = Vector(w)
+    xi_vec = Vector(xi)
+    print(w_vec)
+    w_vec = w_vec.scalar_mult(e).add(b_vec)
+
+    print(w_vec)
+    w_enc = [encode(x, 256, 32) for x in w_vec.v]
+    xi_enc = [encode(x, 256, 32) for x in xi_vec.v]
+    # exit(0)
+
+    #Commit phase
+    com_int1 = xi_vec.inner_product(b_vec)
+    # print(com_int1)
+    blind1 = os.urandom(32)
+    pc = PC(com_int1, blinding=blind1)
+    # print(pc.v)
+
+    #Challenge ep
+    com_int2 = xi_vec.inner_product(w_vec)
+    
+
+    # self.lx = self.l[0].add(self.l[1].scalar_mult(self.x_1))
+    ipc1 = IPC(w_enc, xi_enc)
     comm1 = ipc1.get_commitment()
     print('generated commitment: ', binascii.hexlify(comm1))
     proof = ipc1.generate_proof()
