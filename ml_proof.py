@@ -101,10 +101,10 @@ def inner_product_prover(w, xi, n, V, gamma):
     proof = ipc1.generate_proof()
     a, b, L, R = proof
     print('generated proof: ')
-    # print('a: ', binascii.hexlify(a))
-    # print('b: ', binascii.hexlify(b))
-    # print('L: ', [binascii.hexlify(_) for _ in L])
-    # print('R: ', [binascii.hexlify(_) for _ in R])
+    print('a: ', binascii.hexlify(a))
+    print('b: ', binascii.hexlify(b))
+    print('L: ', [binascii.hexlify(_) for _ in L])
+    print('R: ', [binascii.hexlify(_) for _ in R])
     print('Total byte length is: ',
           len(a) + len(b) + len(L) * len(L[0]) + len(R) * len(R[0]) + len(comm1) 
           + len(final_pc.get_commitment()) + len(pc2.get_commitment()))

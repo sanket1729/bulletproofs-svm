@@ -11,7 +11,7 @@ def sign(x):
     return 0
 
 def read_data():
-    cut = 7000
+    cut = 70
 
     print('reading data...')
 
@@ -48,7 +48,7 @@ def mod(value):
 
 def scale(vector):
     ret = []
-    scaling = 1e16
+    scaling = 1e3
     for item in vector:
         item = int(item * scaling)
         if item < 0:
@@ -88,11 +88,12 @@ def model():
         y_compute.append(sign(result))
     print('try ', y_compute)
     y_compute = np.array(y_compute)
-    print('score ', np.sum(y_compute == y_test) / y_compute.shape[0])
+    print('score ', 1. * np.sum(y_compute == y_test) / y_compute.shape[0])
 
     score = svm.score(X_test, y_test)
     print('score ', score)
 
     return w, x_compute, y_compute
 
-model()
+if __name__ == "__main__":
+    model()
