@@ -7,6 +7,7 @@ from utils import (modinv, inner_product, halves, getNUMS, ecmult, Vector, ecadd
 from vectorpedersen import VPC, PC
 from rangeproof import RangeProof
 from innerproduct import IPC
+from time import time
 
 
 def range_prover(value, rangebits):
@@ -70,7 +71,6 @@ def inner_product_prover(w, xi, n, V, gamma):
     w_vec = Vector(w)
     xi_vec = Vector(xi)
     value = xi_vec.inner_product(w_vec)
-
 
     randints = [decode(os.urandom(32), 256) for _ in range(n)]
     b_vec = Vector(randints)
@@ -142,8 +142,11 @@ def inner_product_verifier(n, V, prf):
         return False
 
 
-def process_cand_inner(w,xi,n):
-    rangebits = 128
+def process_cand_inner(w,xi,n,rangebits):
+    with open('./debug.txt', 'a') as f:
+        for item in xi:
+            f.write(str(item) + '\n')
+    start = time()
     w_vec = Vector(w)
     xi_vec = Vector(xi)
     value = xi_vec.inner_product(w_vec)
@@ -154,20 +157,36 @@ def process_cand_inner(w,xi,n):
     V = rp.V 
     gamma = rp.gamma
     print("Lenght of Range Proof is :", len(prf))
+    #with open('./result.txt', 'a') as f:
+    #    f.write("Lenght of Range Proof is : " + str(len(prf)) + '\n')
     print("Starting Inner Product proof generation: Generating proof")
     prf2 = inner_product_prover(w, xi, n, V, gamma)
     final_pc, pc2, a,b,L,R,comm1 = prf2
     len2 = len(a) + len(b) + len(L) * len(L[0]) + len(R) * len(R[0]) + len(comm1) + len(final_pc) + len(pc2) + len(final_pc) + len(pc2)
     print("Generated Inner Product proof: len " + str(len2))
+    #with open('./result.txt', 'a') as f:
+    #    f.write("Generated Inner Product proof: len " + str(len2) + '\n')
     print("\n\n")
     print("Proof Generation complete: It's total length is " + str(len(prf) + len2))
     range_verifier(prf, negetive, V, rangebits)
 
+    end = time()
+    print("Proof Time is : ", end - start)
     return inner_product_verifier(n,V,prf2)
 
 
 if __name__ == "__main__":
-    n = 32
-    w = [x for x in range(1234 + 1, 1234+ n + 1)]
-    xi = [x for x in range(123 + 1, 123+ n + 1)]
-    process_cand_inner(w,xi, n)
+    from time import time
+    for i in [10]:#[2, 4, 8, 10]:
+        n = 2**i
+        for j in [7]:#[3, 5, 7]:
+            w = [x for x in range(1234 + 1, 1234 + n + 1)]
+            xi = [x for x in range(123 + 1, 123 + n + 1)]
+            rangebits = 2**j
+            start = time()
+            process_cand_inner(w,xi, n, rangebits)
+            end = time()
+            with open('./result.txt', 'a') as f:
+                f.write('n ' + str(n) + '\n' +
+                        'rangebits ' + str(rangebits) + '\n' +
+                        'time ' + str(end - start) + '\n\n')

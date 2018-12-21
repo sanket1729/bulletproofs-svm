@@ -46,9 +46,8 @@ def split_data(X, y):
 def mod(value):
     return int(value) % modulus
 
-def scale(vector):
+def scale(vector, scaling):
     ret = []
-    scaling = 1e3
     for item in vector:
         item = int(item * scaling)
         if item < 0:
@@ -73,22 +72,24 @@ def model():
 
     print('training...')
     svm = SVC(kernel='linear').fit(X, y)
-    w = scale(np.concatenate((svm.coef_[0], svm.intercept_)))
+    print(np.concatenate((svm.coef_[0], svm.intercept_)))
 
     #y_predict = svm.predict(X_test)
     #print('prediction ', y_predict)
     print('golden ', y_test)
 
-    x_compute = []
-    y_compute = []
-    for i in range(X_test.shape[0]):
-        sample = scale(np.concatenate((X_test[i], np.array([1]))))
-        result = mod(int(dot(sample, w)))
-        x_compute.append(sample)
-        y_compute.append(sign(result))
-    print('try ', y_compute)
-    y_compute = np.array(y_compute)
-    print('score ', 1. * np.sum(y_compute == y_test) / y_compute.shape[0])
+    for j in [3]:
+        scaling = 10**j
+        x_compute = []
+        y_compute = []
+        for i in range(X_test.shape[0]):
+            w = scale(np.concatenate((svm.coef_[0], svm.intercept_)), scaling)
+            sample = scale(np.concatenate((X_test[i], np.array([1]))), scaling)
+            result = mod(int(dot(sample, w)))
+            x_compute.append(sample)
+            y_compute.append(sign(result))
+        y_compute = np.array(y_compute)
+        print(scaling, 1. * np.sum(y_compute == y_test) / y_compute.shape[0])
 
     score = svm.score(X_test, y_test)
     print('score ', score)
