@@ -64,7 +64,13 @@ scalar multiply (`ecmult`) and point addition (`ec_add_pubkeys`), into the
 ```
 git clone https://github.com/Joinmarket-Org/joinmarket-clientserver
 cd joinmarket-clientserver
+git checkout a612ddba72e8f79fff6fbc681c348172fdaa6544 -b test
 ./install.sh
+source jmvenv/bin/activate
+cd ..
+git clone https://github.com/AdamISZ/bulletproofs-poc.git
+cd bulletproofs-poc/
+python rangeproof.py 3 4
 ```
 
 Note this install script installs a bunch of stuff into a virtualenv most of which you
